@@ -11,6 +11,7 @@ public class CustomerRoute extends RouteBuilder {
         from("kafka:{{kafka.customer.topic.name}}?groupId={{kafka.customer.consumer.group}}" +
                 "&autoOffsetReset=earliest")
                 .routeId("kafka2PostgresqlCustomer")
+                .transacted()
                 .unmarshal().json()
                 .log(LoggingLevel.DEBUG, "Customer event received: ${body}")
                 .filter().jsonpath("$..[?(@.op =~ /d|t|m/)]")
@@ -28,6 +29,6 @@ public class CustomerRoute extends RouteBuilder {
                     .setBody(constant("UPDATE customer SET name = :?customerName WHERE customer_id = :?customerId;"))
                 .end()
                 .log(LoggingLevel.DEBUG, "SQL statement: ${body}")
-                .to("jdbc:cashback?useHeadersAsParameters=true");
+                .to("jdbc:cashback?useHeadersAsParameters=true&resetAutoCommit=false");
     }
 }
